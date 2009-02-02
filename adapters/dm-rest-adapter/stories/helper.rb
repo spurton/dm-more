@@ -14,6 +14,6 @@ ROOT = Pathname(__FILE__).dirname.parent.expand_path
 lib = ROOT.parent.parent.join('dm-serializer', 'lib').expand_path
 $LOAD_PATH.unshift(lib) if lib.directory?
 
-require ROOT + 'lib/rest_adapter'
+require ROOT + 'lib/dm-rest'
 require ROOT + 'stories/resources/helpers/story_helper'
 require ROOT + 'stories/resources/steps/using_rest_adapter'
