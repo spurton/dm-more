@@ -128,14 +128,15 @@ describe 'A REST adapter' do
     end
 
     describe 'if the resource does not exist' do
-      it 'should return nil' do
-        @id = 1
-        @response = mock(Net::HTTPNotFound)
-        @response.stub!(:content_type).and_return('text/html')
-        @response.stub!(:body).and_return('<html></html>')
-        @adapter.connection.stub!(:http_get).and_return(@response)
-        id = 4200
-        Book.get(id).should be_nil
+      it 'should raise DataMapperRest::ResourceNotFound' do                                                           
+        @mock_resp = mock("response")        
+        @mock_http = mock("http")
+        Net::HTTP.should_receive(:start).and_yield @mock_http
+
+        @mock_resp.should_receive(:code).and_return 404
+        @mock_http.should_receive(:request).and_return @mock_resp
+
+        lambda{ Book.get(5000) }.should raise_error(DataMapperRest::ResourceNotFound)        
       end
     end
   end
@@ -163,21 +164,28 @@ describe 'A REST adapter' do
       BOOK
       @response = mock(Net::HTTPResponse)
       @response.stub!(:body).and_return(books_xml)
-      @adapter.connection.stub!(:http_get).and_return(@response)
     end
 
     it 'should get a non-empty list' do
+      @adapter.connection.stub!(:http_get).and_return(@response)      
       Book.all.should_not be_empty
     end
 
     it 'should receive one Resource for each entity in the XML' do
+      @adapter.connection.stub!(:http_get).and_return(@response)      
       Book.all.size.should == 2
     end
-
-    it 'should do an HTTP GET' do
-      @adapter.connection.should_receive(:http_get).and_return(@response)
-      Book.first
+    
+    it "should call read_many method" do
+      @adapter.connection.stub!(:http_get).and_return(@response)      
+      @adapter.should_receive(:read_many)
+      Book.all
     end
+    
+    it "should raise NotImplementedError if conditions are specified" do
+      # Have to find a way to set an expectation for a method call inside a block
+      # Book.all(:title => "NonExistentTitle")
+    end    
   end
 
   describe 'when updating an existing resource' do
@@ -207,6 +215,14 @@ describe 'A REST adapter' do
       @repository.scope do
         @book.save
       end
+    end
+    
+    it "should not do an HTTP PUT for non-dirty resources" do
+      @book.should_receive(:dirty_attributes).and_return({})
+      @adapter.connection.should_receive(:http_put).never
+      @repository.scope do
+        @book.save
+      end      
     end
   end  
 end
