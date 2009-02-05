@@ -4,8 +4,8 @@ Manifest.txt
 README.txt
 Rakefile
 TODO
-lib/dm-rest.rb
-lib/dm-rest/version.rb
+lib/rest_adapter.rb
+lib/rest_adapter/version.rb
 spec/crud_spec.rb
 spec/connection_spec.rb
 spec/ruby_forker.rb
