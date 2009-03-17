@@ -22,10 +22,10 @@ module DataMapper
       def tagged_with(string, options = {})
         tag = Tag.first(:name => string)
         conditions = {}
-        conditions[:tag_id] = tag.id
-        conditions[:tag_context] = options[:on] if options.has_key?(:on)
-        conditions[:taggable_type] = self.to_s
-        Tagging.all(conditions).map { |tagging| tagging.taggable }
+        conditions['taggings.tag_id'] = tag.id
+        conditions['taggings.tag_context'] = options.delete(:on) if options[:on]
+        conditions.merge!(options)
+        all(conditions)
       end
 
       def taggable?
@@ -38,6 +38,19 @@ module DataMapper
         associations.flatten!
         associations.uniq!
 
+        class_eval do
+          has n, :taggings, :class_name => "Tagging", :child_key => [:taggable_id],
+          :taggable_type => self.to_s
+
+          before :destroy, :destroy_taggings unless respond_to?(:destroy_taggings)
+
+          def destroy_taggings
+            taggings.destroy!
+          end unless respond_to?(:destroy_taggings)
+
+          private :taggings, :taggings=, :destroy_taggings
+        end
+
         self.extend(DataMapper::Tags::SingletonMethods)
 
         associations.each do |association|
@@ -45,7 +58,7 @@ module DataMapper
           singular    = association.singular
 
           class_eval <<-RUBY
-            property :frozen_#{singular}_list, String
+            property :frozen_#{singular}_list, Text
 
             has n, :#{singular}_taggings, :class_name => "Tagging", :child_key => [:taggable_id], :taggable_type => self.to_s, :tag_context => "#{association}"
 
@@ -84,6 +97,29 @@ module DataMapper
 
               self.frozen_#{singular}_list = #{association}.map { |tag| tag.name }.join(',')
             end
+
+            ##
+            # Helper methods to make setting tags easier
+            # FIXME: figure out why calling #{singular}_list=(string) won't work
+            def #{singular}_collection=(string)
+              @#{singular}_list = string.to_s.split(',').map { |name| name.gsub(/[^\\w\\s_-]/i, '').strip }.uniq.sort
+            end
+
+            ##
+            # Helper methods to make setting tags easier
+            #
+            def #{singular}_collection
+              #{association}.map { |tag| tag.name }.join(', ')
+            end
+
+            ##
+            # Like tag_collection= except it only add's tags
+            #
+            def add_#{singular}(string)
+              tag_array = string.to_s.split(',').map { |name| name.gsub(/[^\\w\\s_-]/i, '').strip }.uniq.sort
+              @#{singular}_list = (tag_array + #{singular}_list)
+            end
+
           RUBY
         end
       end

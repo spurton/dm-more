@@ -51,6 +51,30 @@ describe "Taggable" do
     @taggable.skills.sort_by{|skill| skill.id}.should_not == [tag3, Tag.first(:name => 'tag4')]
   end
 
+  it "should set tags with a string, and return a string (form helpers)" do
+    @taggable = TaggedModel.new
+    tags_string = "tag-a, tag-b, tag-c"
+    @taggable.tag_collection = tags_string
+    @taggable.save
+    @taggable.tag_collection.should == tags_string
+    @taggable.tags.size.should == 3
+  end
+
+  it "should be able to add tags and not overwrite old tags" do
+    @taggable = TaggedModel.new
+    @taggable.add_tag("tag-1")
+    @taggable.save
+    @taggable.tags.size.should == 1
+    @taggable.add_tag("tag-2, tag-3")
+    @taggable.save
+    @taggable.tags.size.should == 3
+    @taggable.add_tag("tag-4")
+    @taggable.tag_list.include?("tag-4").should be_true
+    @taggable.tag_list.include?("tag-1").should be_true
+    @taggable.save
+    @taggable.tags.size.should == 4
+  end
+
   describe ".tagged_with" do
     it "should have a class method .tagged_with" do
       DefaultTaggedModel.should respond_to(:tagged_with)
@@ -79,6 +103,18 @@ describe "Taggable" do
     end
   end
 
+  it "should allow extra conditions for the query" do
+    taggable1 = TaggedModel.new
+    taggable2 = TaggedModel.new
+    taggable1.tag_list = 'tag1, tag2, tag3'
+    taggable2.skill_list = 'tag1, skill4'
+    taggable1.save
+    taggable2.save
+    TaggedModel.tagged_with('tag1').should == [taggable1, taggable2]
+    TaggedModel.tagged_with('tag1', :id => taggable1.id).should == [taggable1]
+  end
+
+
   it "should have a class method .taggable? which returns true if tagging is defined, and false otherwise" do
     UntaggedModel.taggable?.should be_false
     TaggedModel.taggable?.should be_true
@@ -90,4 +126,14 @@ describe "Taggable" do
     TaggedModel.new.taggable?.should == TaggedModel.taggable?
     TaggedModel.new.taggable?.should be_true
   end
+
+  it 'should destroy associated taggings when destroyed' do
+    taggable = TaggedModel.new
+    taggable.tag_list = 'tag1, tag2, tag3'
+    taggable.save
+    TaggedModel.tagged_with('tag1').should == [taggable]
+    taggable.destroy
+    TaggedModel.tagged_with('tag1').should == []
+  end
+
 end
