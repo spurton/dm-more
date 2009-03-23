@@ -21,7 +21,7 @@ module DataMapper
       propset = properties_to_serialize(options)
 
       fields += propset.map do |property|
-        "#{property.name.to_json}: #{send(property.getter).to_json}"
+        "#{property.name.to_json}: #{send(property.name).to_json}"
       end
 
       # add methods
@@ -67,7 +67,7 @@ module DataMapper
   class Collection
     def to_json(*args)
       opts = args.first || {}
-      "[" << map {|e| e.to_json(opts)}.join(",") << "]"
+      '[' << map { |e| e.to_json(opts) }.join(',') << ']'
     end
   end
 end

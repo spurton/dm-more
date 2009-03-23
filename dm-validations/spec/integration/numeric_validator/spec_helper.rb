@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 class BasketballPlayer
   #
   # Behaviors
@@ -23,7 +24,6 @@ class BasketballPlayer
   validates_is_number :height, :weight
 end
 BasketballPlayer.auto_migrate!
-
 
 
 class City
@@ -51,7 +51,6 @@ end
 City.auto_migrate!
 
 
-
 class Country
   #
   # Behaviors
@@ -66,7 +65,7 @@ class Country
   property :id,         Serial
   property :name,       String
 
-  property :area,       String, :integer_only => true
+  property :area,       Integer
 
   #
   # Validations

@@ -6,14 +6,15 @@ describe DataMapper::Types::URI do
     class ::URITest
       include DataMapper::Resource
 
-      property :id, Integer, :serial => true
-      property :uri, DM::URI
+      property :id,  Serial
+      property :uri, URI
     end
+
     URITest.auto_migrate!
   end
 
   it "should work" do
-    repository(:default) do
+    DataMapper.repository(:default) do
       URITest.create(:uri => 'http://localhost')
     end
 

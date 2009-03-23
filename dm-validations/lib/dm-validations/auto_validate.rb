@@ -10,17 +10,13 @@ module DataMapper
       def options_with_message(base_options, property, validator_name)
         options = base_options.clone
         opts = property.options
-        options[:message] = if opts[:messages]
-          if opts[:messages].is_a?(Hash) and msg = opts[:messages][validator_name]
-            msg
-          else
-            nil
-          end
-        elsif opts[:message]
-          opts[:message]
-        else
-          nil
-        end
+        options[:message] = if opts[:messages] && opts[:messages].respond_to?(:[])
+                              opts[:messages][validator_name]
+                            elsif opts[:message]
+                              opts[:message]
+                            else
+                              nil
+                            end
         options
       end
 
@@ -76,8 +72,7 @@ module DataMapper
       #       It is just shortcut if only one validation option is set
       #
       def auto_generate_validations(property)
-        property.options[:auto_validation] = true unless property.options.has_key?(:auto_validation)
-        return unless property.options[:auto_validation]
+        return if property.options.has_key?(:auto_validation) && !property.options[:auto_validation]
 
         # a serial property is allowed to be nil too, because the
         # value is set by the storage system

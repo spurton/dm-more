@@ -3,7 +3,8 @@ require 'yaml'
 module DataMapper
   module Types
     class Yaml < DataMapper::Type
-      primitive Text
+      primitive String
+      size 65535
       lazy true
 
       def self.load(value, property)
@@ -12,7 +13,7 @@ module DataMapper
         elsif value.is_a?(String)
           ::YAML.load(value)
         else
-          raise ArgumentError.new("+value+ must be nil or a String")
+          raise ArgumentError.new("+value+ of a property of YAML type must be nil or a String")
         end
       end
 

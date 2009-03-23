@@ -6,14 +6,14 @@ describe DataMapper::Types::FilePath do
     class ::FilePathTest
       include DataMapper::Resource
 
-      property :id, Integer, :serial => true
+      property :id, Serial
       property :path, FilePath
     end
     FilePathTest.auto_migrate!
   end
 
   it "should work" do
-    repository(:default) do
+    DataMapper.repository(:default) do
       FilePathTest.create(:path => '/usr')
     end
 

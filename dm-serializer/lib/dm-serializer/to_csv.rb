@@ -19,9 +19,8 @@ module DataMapper
     # @return <String> a CSV representation of the Resource
     def to_csv(writer = '')
       CSV.generate(writer) do |csv|
-        row = []
-        self.class.properties(repository.name).each do |property|
-          row << send(property.name).to_s
+        row = model.properties(repository.name).map do |property|
+          send(property.name).to_s
         end
         csv << row
       end
@@ -30,7 +29,7 @@ module DataMapper
 
   class Collection
     def to_csv
-      result = ""
+      result = ''
       each do |item|
         result << item.to_csv + "\n"
       end

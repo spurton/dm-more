@@ -1,25 +1,58 @@
 module DataMapper
   module Adapters
-    class DataObjectsAdapter
-      def aggregate(query)
-        with_reader(read_statement(query), query.bind_values) do |reader|
-          results = []
+    class DataObjectsAdapter < AbstractAdapter
 
-          while(reader.next!) do
-            row = query.fields.zip(reader.values).map do |field,value|
-              if field.respond_to?(:operator)
-                send(field.operator, field.target, value)
-              else
-                field.typecast(value)
+      def aggregate(query)
+        # with_reader(select_statement(query), query.bind_values) do |reader|
+        #   results = []
+        #
+        #   while(reader.next!) do
+        #     row = query.fields.zip(reader.values).map do |field,value|
+        #       if field.respond_to?(:operator)
+        #         send(field.operator, field.target, value)
+        #       else
+        #         field.typecast(value)
+        #       end
+        #     end
+        #
+        #     results << (query.fields.size > 1 ? row : row[0])
+        #   end
+        #
+        #   results
+        # end
+
+        with_connection do |connection|
+          command = connection.create_command(select_statement(query))
+          command.set_types(query.fields.map { |p| p.primitive })
+
+          begin
+            reader = command.execute_reader(*query.bind_values)
+
+            model   = query.model
+            results = []
+
+            while(reader.next!)
+              row = query.fields.zip(reader.values).map do |field,value|
+                if field.respond_to?(:operator)
+                  send(field.operator, field.target, value)
+                else
+                  field.typecast(value)
+                end
               end
+
+              results << (query.fields.size > 1 ? row : row[0])
             end
 
-            results << (query.fields.size > 1 ? row : row[0])
+            results
+          ensure
+            reader.close if reader
           end
-
-          results
         end
+
+
       end
+
+
 
       private
 
@@ -45,25 +78,28 @@ module DataMapper
 
       module SQL
         private
+        def included(host)
+          host.class_eval do
+            alias original_property_to_column_name property_to_column_name
+          end
+        end
 
-        alias original_property_to_column_name property_to_column_name
-
-        def property_to_column_name(repository, property, qualify)
+        def property_to_column_name(property, qualify)
           case property
             when Query::Operator
-              aggregate_field_statement(repository, property.operator, property.target, qualify)
+              aggregate_field_statement(property.operator, property.target, qualify)
             when Property, Query::Path
-              original_property_to_column_name(repository, property, qualify)
+              original_property_to_column_name(property, qualify)
             else
               raise ArgumentError, "+property+ must be a DataMapper::Query::Operator, a DataMapper::Property or a Query::Path, but was a #{property.class} (#{property.inspect})"
           end
         end
 
-        def aggregate_field_statement(repository, aggregate_function, property, qualify)
+        def aggregate_field_statement(aggregate_function, property, qualify)
           column_name = if aggregate_function == :count && property == :all
             '*'
           else
-            property_to_column_name(repository, property, qualify)
+            property_to_column_name(property, qualify)
           end
 
           function_name = case aggregate_function

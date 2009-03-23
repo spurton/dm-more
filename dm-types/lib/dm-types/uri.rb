@@ -1,12 +1,13 @@
 require 'rubygems'
 
-gem 'addressable', '~>2.0.1'
+gem 'addressable', '~>2.0.2'
 require 'addressable/uri'
 
 module DataMapper
   module Types
     class URI < DataMapper::Type
       primitive String
+      size 255
 
       def self.load(value, property)
         Addressable::URI.parse(value)

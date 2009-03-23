@@ -1,7 +1,7 @@
 require "rubygems"
 require 'pathname'
 
-gem 'dm-core', '~>0.9.11'
+gem 'dm-core', '0.10.0'
 require 'dm-core'
 
 spec_dir_path = Pathname(__FILE__).dirname.expand_path
@@ -30,8 +30,8 @@ class Cow
   property :name,      String
   property :breed,     String
 
-  has n, :baby_cows, :class_name => 'Cow'
-  belongs_to :mother_cow, :class_name => 'Cow'
+  has n, :baby_cows, :model => 'Cow'
+  belongs_to :mother_cow, :model => 'Cow'
 end
 
 require "benchwarmer"

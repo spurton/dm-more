@@ -6,14 +6,14 @@ describe DataMapper::Types::Enum do
     class ::Bug
       include DataMapper::Resource
 
-      property :id, Integer, :serial => true
+      property :id, Serial
       property :status, Enum[:crit, :warn, :info, :unknown]
     end
     Bug.auto_migrate!
   end
 
   it "should work" do
-    repository(:default) do
+    DataMapper.repository(:default) do
       Bug.create(:status => :crit)
       Bug.create(:status => :warn)
     end

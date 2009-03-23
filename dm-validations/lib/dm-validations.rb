@@ -1,69 +1,73 @@
 require 'rubygems'
 require 'pathname'
 
-gem 'dm-core', '~>0.9.11'
+gem 'dm-core', '0.10.0'
 require 'dm-core'
 
 dir = Pathname(__FILE__).dirname.expand_path / 'dm-validations'
 
+require dir / 'exceptions'
 require dir / 'validation_errors'
 require dir / 'contextual_validators'
 require dir / 'auto_validate'
 
-require dir / 'generic_validator'
-require dir / 'required_field_validator'
-require dir / 'primitive_validator'
-require dir / 'absent_field_validator'
-require dir / 'confirmation_validator'
-require dir / 'format_validator'
-require dir / 'length_validator'
-require dir / 'within_validator'
-require dir / 'numeric_validator'
-require dir / 'method_validator'
-require dir / 'block_validator'
-require dir / 'uniqueness_validator'
-require dir / 'acceptance_validator'
-require dir / 'custom_validator'
+require dir / 'validators' / 'generic_validator'
+require dir / 'validators' / 'required_field_validator'
+require dir / 'validators' / 'primitive_validator'
+require dir / 'validators' / 'absent_field_validator'
+require dir / 'validators' / 'confirmation_validator'
+require dir / 'validators' / 'format_validator'
+require dir / 'validators' / 'length_validator'
+require dir / 'validators' / 'within_validator'
+require dir / 'validators' / 'numeric_validator'
+require dir / 'validators' / 'method_validator'
+require dir / 'validators' / 'block_validator'
+require dir / 'validators' / 'uniqueness_validator'
+require dir / 'validators' / 'acceptance_validator'
 
 require dir / 'support' / 'object'
 
 module DataMapper
   module Validate
+    extend Chainable
 
     def self.included(model)
-      model.class_eval <<-EOS, __FILE__, __LINE__
-        if method_defined?(:save)
-          before :save, :check_validations
+      model.class_eval do
+        def self.create(attributes = {}, context = :default)
+          resource = new(attributes)
+          return resource unless resource.valid?(context)
+          resource.save!
+          resource
         end
 
-        class << self
-          def create(attributes = {}, context = :default)
-            resource = new(attributes)
-            return resource unless resource.valid?(context)
-            resource.save!
-            resource
-          end
-
-          def create!(attributes = {})
-            resource = new(attributes)
-            resource.save!
-            resource
-          end
+        def self.create!(attributes = {})
+          resource = new(attributes)
+          resource.save!
+          resource
         end
-      EOS
+      end
+
+      # models that are non DM resources must get .validators
+      # and other methods, too
+      model.extend Validate::ClassMethods
     end
 
     # Ensures the object is valid for the context provided, and otherwise
     # throws :halt and returns false.
     #
-    def check_validations(context = :default)
-      throw(:halt, false) unless context.nil? || valid?(context)
+    chainable do
+      def save(context = :default)
+        return false unless context.nil? || valid?(context)
+        super()
+      end
     end
 
     # Calls save with a context of nil, thus skipping validations.
     #
-    def save!
-      save(nil)
+    chainable do
+      def save!
+        save(nil)
+      end
     end
 
     # Return the ValidationErrors
@@ -117,7 +121,6 @@ module DataMapper
       return valid && target.valid?
     end
 
-
     def validation_property_value(name)
       self.respond_to?(name, true) ? self.send(name) : nil
     end
@@ -127,7 +130,7 @@ module DataMapper
     # Note: DataMapper validations can be used on non-DataMapper resources.
     # In such cases, the return value will be nil.
     def validation_property(field_name)
-      if respond_to?(:model) && (properties = model.properties(self.repository.name)) && properties.has_property?(field_name)
+      if respond_to?(:model) && (properties = model.properties(self.repository.name)) && properties.named?(field_name)
         properties[field_name]
       end
     end
@@ -171,11 +174,7 @@ module DataMapper
       #
       def opts_from_validator_args(args, defaults = nil)
         opts = args.last.kind_of?(Hash) ? args.pop : {}
-        context = :default
-        context = opts[:context] if opts.has_key?(:context)
-        context = opts.delete(:on) if opts.has_key?(:on)
-        context = opts.delete(:when) if opts.has_key?(:when)
-        context = opts.delete(:group) if opts.has_key?(:group)
+        context = opts.delete(:group) || opts.delete(:on) || opts.delete(:when) || opts.delete(:context) || :default
         opts[:context] = context
         opts.mergs!(defaults) unless defaults.nil?
         opts
@@ -207,7 +206,16 @@ module DataMapper
 
       # Create a new validator of the given klazz and push it onto the
       # requested context for each of the attributes in the fields list
+      # @param [Hash]          opts
+      #    Options supplied to validation macro, example:
+      #    {:context=>:default, :maximum=>50, :allow_nil=>true, :message=>nil}
       #
+      # @param [Array<Symbol>] fields
+      #    Fields given to validation macro, example:
+      #    [:first_name, :last_name] in validates_present :first_name, :last_name
+      #
+      # @param [Class] klazz
+      #    Validator class, example: DataMapper::Validate::LengthValidator
       def add_validator_to_context(opts, fields, klazz)
         fields.each do |field|
           validator = klazz.new(field, opts)
@@ -229,6 +237,6 @@ module DataMapper
     end # module ClassMethods
   end # module Validate
 
-  Resource.append_inclusions Validate
+  Model.append_inclusions Validate
   Model.append_extensions Validate::ClassMethods
 end # module DataMapper

@@ -1,8 +1,16 @@
 require 'pathname'
 require 'rubygems'
 
-gem 'rspec', '~>1.1.11'
+gem 'rspec', '>=1.1.12'
 require 'spec'
+
+# run the specs with dm-validations, if available
+begin
+  gem 'dm-validations', '0.10.0'
+  require 'dm-validations'
+rescue LoadError
+  # do nothing
+end
 
 require Pathname(__FILE__).dirname.parent.expand_path + 'lib/dm-timestamps'
 

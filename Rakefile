@@ -47,12 +47,12 @@ AUTHOR = 'Sam Smoot'
 EMAIL  = 'ssmoot [a] gmail [d] com'
 GEM_NAME = 'dm-more'
 GEM_VERSION = DataMapper::More::VERSION
-GEM_DEPENDENCIES = [['dm-core', "~>#{GEM_VERSION}"], *gems.map { |g| [g, "~>#{GEM_VERSION}"] }]
+GEM_DEPENDENCIES = [['dm-core', GEM_VERSION], *gems.map { |g| [g, GEM_VERSION] }]
 GEM_CLEAN = %w[ **/.DS_Store} *.db doc/rdoc .config **/{coverage,log,pkg} cache lib/dm-more.rb ]
 GEM_EXTRAS = { :has_rdoc => false }
 
 PROJECT_NAME = 'datamapper'
-PROJECT_URL  = 'http://github.com/sam/dm-more/tree/master'
+PROJECT_URL  = 'http://github.com/datamapper/dm-more/tree/master'
 PROJECT_DESCRIPTION = 'Faster, Better, Simpler.'
 PROJECT_SUMMARY = 'An Object/Relational Mapper for Ruby'
 
