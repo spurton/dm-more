@@ -5,11 +5,12 @@ module DataMapperRest
   # TODO: Support https?
   class Connection
     include Extlib
-    attr_accessor :uri, :format
+    attr_accessor :uri, :format, :timeout
 
-    def initialize(uri, format)
+    def initialize(uri, options={})
       @uri = uri
-      @format = Format.new(format)
+      @format = Format.new(options[:format])
+      @timeout = options[:timeout]
     end
 
     # this is used to run the http verbs like http_post, http_put, http_delete etc.
@@ -33,6 +34,7 @@ module DataMapperRest
         request do |http|
           mod = Net::HTTP::module_eval(Inflection.camelize(verb))
           request = mod.new(@uri.to_s, @format.header)
+          request.read_timeout = @timeout
           request.basic_auth(@uri.user, @uri.password) if @uri.user && @uri.password
           result = http.request(request, data)
 

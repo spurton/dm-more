@@ -7,7 +7,7 @@ module DataMapperRest
     include Extlib
 
     def connection
-      @connection ||= Connection.new(normalized_uri, @format)
+      @connection ||= Connection.new(normalized_uri, {:format => @format, :timeout => @timeout})
     end
 
     # Creates a new resource in the specified repository.
@@ -102,10 +102,12 @@ module DataMapperRest
     end
 
   protected
-
+    # set a default format of xml
+    # set a default timeout of 30 seconds
     def initialize(*)
       super
       @format = @options.fetch(:format, 'xml')
+      @timeout = @options.fetch(:timeout, 30) 
     end
 
     def normalized_uri

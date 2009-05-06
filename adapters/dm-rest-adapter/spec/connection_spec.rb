@@ -12,7 +12,8 @@ describe 'A Connection instance' do
       :password => @password,
       :host     => 'localhost',
       :port     => '4000',
-      :query    => nil
+      :query    => nil,
+      :timeout  => 120
     )
     @connection = DataMapperRest::Connection.new(@uri, "xml")
   end
@@ -32,6 +33,10 @@ describe 'A Connection instance' do
   it "should return the correct extension and mime type for json" do
     connection = DataMapperRest::Connection.new(@uri, "json")
     connection.format.header.should == {'Content-Type' => "application/json"}
+  end
+  
+  it "should have a timeout of 120" do
+    @connection.timeout.should == 120
   end
 
   describe 'when running the verb methods' do
@@ -126,4 +131,5 @@ describe 'A Connection instance' do
     end
 
   end
+  
 end
