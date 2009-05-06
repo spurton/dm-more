@@ -15,7 +15,7 @@ module DataMapper
     class GenericValidator
 
       attr_accessor :if_clause, :unless_clause
-      attr_reader   :field_name, :options
+      attr_reader   :field_name, :options, :humanized_field_name
 
       # Construct a validator. Capture the :if and :unless clauses when present.
       #
@@ -33,6 +33,7 @@ module DataMapper
         @unless_clause = options.delete(:unless)
 
         @field_name, @options = field_name, options
+        @humanized_field_name = Extlib::Inflection.humanize(@field_name)
       end
 
       # Add an error message to a target resource. If the error corresponds to a
@@ -85,15 +86,34 @@ module DataMapper
         true
       end
 
+      # Returns true if validators are equal
+      #
+      # Note that this intentionally do
+      # validate options equality
+      #
+      # even though it is hard to imagine a situation
+      # when multiple validations will be used
+      # on the same field with the same conditions
+      # but different options,
+      # it happens to be the case every once in a while
+      # with inferred validations for strings/text and
+      # explicitly given validations with different option
+      # (usually as Range vs. max limit for inferred validation)
+      #
+      # @semipublic
       def ==(other)
         self.class == other.class &&
         self.field_name == other.field_name &&
-        self.class == other.class &&
         self.if_clause == other.if_clause &&
         self.unless_clause == other.unless_clause &&
         self.instance_variable_get(:@options) == other.instance_variable_get(:@options)
       end
 
+      def inspect
+        "<##{self.class.name} @field_name='#{@field_name}' @if_clause=#{@if_clause.inspect} @unless_clause=#{@unless_clause.inspect} @options=#{@options.inspect}>"
+      end
+
+      alias to_s inspect
     end # class GenericValidator
   end # module Validate
-end # module DataMapper
+end # module DataMapper

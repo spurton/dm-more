@@ -6,6 +6,8 @@ require 'dm-core'
 
 dir = Pathname(__FILE__).dirname.expand_path / 'dm-validations'
 
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
 require dir / 'exceptions'
 require dir / 'validation_errors'
 require dir / 'contextual_validators'
@@ -73,7 +75,7 @@ module DataMapper
     # Return the ValidationErrors
     #
     def errors
-      @errors ||= ValidationErrors.new
+      @errors ||= ValidationErrors.new(self)
     end
 
     # Mark this resource as validatable. When we validate associations of a
@@ -218,7 +220,7 @@ module DataMapper
       #    Validator class, example: DataMapper::Validate::LengthValidator
       def add_validator_to_context(opts, fields, klazz)
         fields.each do |field|
-          validator = klazz.new(field, opts)
+          validator = klazz.new(field, opts.dup)
           if opts[:context].is_a?(Symbol)
             unless validators.context(opts[:context]).include?(validator)
               validators.context(opts[:context]) << validator

@@ -5,27 +5,42 @@ __dir__ = Pathname(__FILE__).dirname.expand_path
 require __dir__.parent.parent + "spec_helper"
 require __dir__ + 'spec_helper'
 
-describe DataMapper::Validate::LengthValidator do
-  it "lets user specify a minimum length of a string field" do
-    class ::MotorLaunch
-      validates_length :name, :min => 3
-    end
+describe "entity with a name shorter than 2 characters", :shared => true do
+  it "has a meaninful error message with length restrictions mentioned" do
+    @model.errors.on(:name).should include("Name must be more than 2 characters long")
+  end
+end
 
-    launch = MotorLaunch.new
-    launch.name = 'Ab'
-    launch.should_not be_valid
-    launch.errors.on(:name).should include('Name must be more than 3 characters long')
+describe ::DataMapper::Validate::Fixtures::Mittelschnauzer do
+  before :all do
+    @model = DataMapper::Validate::Fixtures::Mittelschnauzer.valid_instance
   end
 
-  it "aliases :minimum for :min" do
-    class ::MotorLaunch
-      validators.clear!
-      validates_length :name, :minimum => 3
+  it_should_behave_like "valid model"
+
+  describe "with a 13 characters long name" do
+    it_should_behave_like "valid model"
+  end
+
+  describe "with a single character name" do
+    before :all do
+      @model.name = "R"
+      @model.valid?
     end
 
-    launch = MotorLaunch.new
-    launch.name = 'Ab'
-    launch.should_not be_valid
-    launch.errors.on(:name).should include('Name must be more than 3 characters long')
+    it_should_behave_like "invalid model"
+
+    it_should_behave_like "entity with a name shorter than 2 characters"
+  end
+
+  describe "with blank name" do
+    before :all do
+      @model.name = ""
+      @model.valid?
+    end
+
+    it_should_behave_like "invalid model"
+
+    it_should_behave_like "entity with a name shorter than 2 characters"
   end
 end

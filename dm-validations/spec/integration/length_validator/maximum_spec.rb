@@ -5,27 +5,47 @@ __dir__ = Pathname(__FILE__).dirname.expand_path
 require __dir__.parent.parent + "spec_helper"
 require __dir__ + 'spec_helper'
 
-describe DataMapper::Validate::LengthValidator do
-  it "lets user specify a maximum length of a string field" do
-    class ::MotorLaunch
-      validators.clear!
-      validates_length :name, :max => 5
-    end
+describe "barcode with invalid code length", :shared => true do
+  it "has a meaninful error message with length restrictions mentioned" do
+    @model.errors.on(:code).should include("Code must be less than 10 characters long")
+  end
+end
 
-    launch = MotorLaunch.new
-    launch.name = 'a' * 6
-    launch.should_not be_valid
-    launch.errors.on(:name).should include('Name must be less than 5 characters long')
+describe ::DataMapper::Validate::Fixtures::Barcode do
+  before :all do
+    @model = DataMapper::Validate::Fixtures::Barcode.valid_instance
   end
 
-  it "aliases :maximum for :max" do
-    class ::MotorLaunch
-      validators.clear!
-      validates_length :name, :maximum => 5
+  it_should_behave_like "valid model"
+
+  describe "with a 17 characters long code" do
+    before :all do
+      @model.code = "18283849284728124"
+      @model.valid?
     end
-    launch = MotorLaunch.new
-    launch.name = 'a' * 6
-    launch.should_not be_valid
-    launch.errors.on(:name).should include('Name must be less than 5 characters long')
+
+    it_should_behave_like "invalid model"
+
+    it_should_behave_like "barcode with invalid code length"
+  end
+
+  describe "with a 7 characters long code" do
+    before :all do
+      @model.code = "8372786"
+      @model.valid?
+    end
+
+    it_should_behave_like "valid model"
+  end
+
+  describe "with an 11 characters long code" do
+    before :all do
+      @model.code = "83727868754"
+      @model.valid?
+    end
+
+    it_should_behave_like "invalid model"
+
+    it_should_behave_like "barcode with invalid code length"
   end
 end

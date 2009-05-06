@@ -1,4 +1,14 @@
-# -*- coding: utf-8 -*-
+# put validator specific fixture models and helpers here
+#
+# make sure you check out spec/fixtures to see fixture models
+# already written
+#
+# DataMapper developers feels strongly against foobars in the spec
+# suite
+
+# TODO: one day we need to get rid of this remaining foobarness
+# and use a few more realistic models with ParanoidBoolean and all
+# that
 
 module TypecastBypassSetter
   # Bypass typecasting so we can set values for specs
@@ -13,7 +23,7 @@ class SailBoat
   include DataMapper::Resource
 
   # this one is not Serial intentionally
-  # use Serial in real world apps  
+  # use Serial in real world apps
   property :id,            Integer,    :key => true
 
   property :name,          String,                                :nullable => false,     :validates       => :presence_test
@@ -34,7 +44,7 @@ class HasNullableBoolean
   include DataMapper::Resource
 
   # this one is not Serial intentionally
-  # use Serial in real world apps  
+  # use Serial in real world apps
   property :id,   Integer, :key => true
   property :bool, Boolean # :nullable => true by default
 
@@ -45,7 +55,7 @@ class HasNotNullableBoolean
   include DataMapper::Resource
 
   # this one is not Serial intentionally
-  # use Serial in real world apps  
+  # use Serial in real world apps
   property :id,   Integer, :key => true
   property :bool, Boolean, :nullable => false
 

@@ -4,7 +4,7 @@ require Pathname(__FILE__).dirname.expand_path.parent + '../spec_helper'
 
 describe DataMapper::Validate::ValidationErrors do
   before :all do
-    @model = DataMapper::Validate::ValidationErrors.new
+    @model = DataMapper::Validate::ValidationErrors.new(Object.new)
   end
 
   describe "after first error being added" do
@@ -48,8 +48,8 @@ describe DataMapper::Validate::ValidationErrors do
       @model.should_not be_empty
     end
 
-    it "allows duplication" do
-      @model.on(:property).should == ["can't be valid, no way", "can't be valid, no way"]
+    it "DOES NOT allow duplication" do
+      @model.on(:property).should == ["can't be valid, no way"]
     end
-  end  
+  end
 end
