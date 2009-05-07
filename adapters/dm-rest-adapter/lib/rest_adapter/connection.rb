@@ -34,7 +34,6 @@ module DataMapperRest
         request do |http|
           mod = Net::HTTP::module_eval(Inflection.camelize(verb))
           request = mod.new(@uri.to_s, @format.header)
-          request.read_timeout = @timeout
           request.basic_auth(@uri.user, @uri.password) if @uri.user && @uri.password
           result = http.request(request, data)
 
@@ -45,6 +44,7 @@ module DataMapperRest
       def request(&block)
         res = nil
         Net::HTTP.start(@uri.host, @uri.port) do |http|
+          http.read_timeout = @timeout
           res = yield(http)
         end
         res
