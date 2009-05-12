@@ -20,7 +20,7 @@ module DataMapperRest
 
         orig_uri, @uri = @uri, @uri.dup
         begin
-          @uri.path = "#{args[0]}.#{@format.extension}" # Should be the form of /resources
+          @uri.path = "/#{args[0]}.#{@format.extension}" # Should be the form of /resources
           run_verb(verb.to_s.split("_").last, args[1])
         ensure
           @uri = orig_uri
